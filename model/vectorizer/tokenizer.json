@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "truncation": {"max_length": 128},
+  "vocab": {
+    "[PAD]": 0,
+    "[UNK]": 1,
+    "[CLS]": 2,
+    "[SEP]": 3,
+    "hola": 10,
+    "curso": 20,
+    "python": 30,
+    "recomendado": 40
+  }
+}

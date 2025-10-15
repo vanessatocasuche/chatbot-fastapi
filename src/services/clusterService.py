@@ -64,7 +64,7 @@ class ClusterService:
         """
         try:
             if not EMBEDDING_MODEL_DIR.exists() or not any(EMBEDDING_MODEL_DIR.glob("*.bin")):
-                logger.warning(f"⚠️  Modelo local no encontrado o incompleto. Descargando 'all-MiniLM-L6-v2'...")
+                logger.warning(f"\n \n--- Modelo local no encontrado o incompleto. Descargando 'all-MiniLM-L6-v2'...")
                 model = SentenceTransformer("all-MiniLM-L6-v2")
                 # Guarda el modelo localmente para no volver a descargarlo
                 EMBEDDING_MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -104,8 +104,8 @@ class ClusterService:
             # Regenerar el modelo si el anterior no sirve
             # ------------------------------------------------------------
             try:
-                # 🧩 Simulación de embeddings (solo ejemplo)
-                # 👉 Aquí deberías usar tus embeddings reales si los tienes
+                # Simulación de embeddings (solo ejemplo)
+                # Aquí deberías usar tus embeddings reales si los tienes
                 X = np.random.rand(100, 384)  # 100 muestras, 384 dimensiones (BERT típico)
 
                 model = KMeans(n_clusters=10, random_state=42)
@@ -132,7 +132,7 @@ class ClusterService:
         if not RESPUESTAS_DIR.exists():
             raise FileNotFoundError(f"No se encontró el archivo de respuestas en: {RESPUESTAS_DIR}")
 
-        logger.info(f"Cargando respuestas desde {RESPUESTAS_DIR}...")
+        logger.info(f"Cargando respuestas desde {RESPUESTAS_DIR}  ...")
         with open(RESPUESTAS_DIR, "r", encoding="utf-8") as f:
             data = json.load(f)
 

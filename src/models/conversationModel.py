@@ -23,7 +23,7 @@ class Message(Base):
     __tablename__ = "messages"
 
     id_message = Column(Integer, primary_key=True, index=True)
-    conversation_id = Column(Integer, ForeignKey("conversations.id_conversation", ondelete="CASCADE"))
+    id_conversation = Column(Integer, ForeignKey("conversations.id_conversation", ondelete="CASCADE"))
     sender = Column(String(20), nullable=False)  # "user" o "bot"
     content = Column(Text, nullable=False)
     cluster_id = Column(Integer, nullable=True)

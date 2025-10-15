@@ -14,6 +14,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from src.schemas.chatSchema import ChatRequest, ChatResponse
 from src.services.clusterService import cluster_service
+from src.services.conversationService import ConversationService  # Import ConversationService
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +27,12 @@ class ResponseService:
     - Genera embeddings con Sentence-BERT
     - Predice clúster con modelo KMeans (u otro)
     - Devuelve la respuesta asociada
+    - Guarda la conversación y mensajes en la base de datos
     """
 
     def __init__(self):
         self.cluster_service = cluster_service
+        self.conversation_service = ConversationService()  # Inicializar ConversationService
 
     # ------------------------------------------------------------
     # MÉTODO 1: Procesar mensaje principal
@@ -96,11 +99,39 @@ class ResponseService:
                 f"mensaje='{request.message[:40]}...'"
             )
 
+            # --------------------------------------------------------
+            # 6. Guardar conversación y mensajes en BD
+            # --------------------------------------------------------
+            conversation_service = self.conversation_service
+
+            # Paso 1: Verificar o crear conversación válida
+            conversation = conversation_service.get_or_create_conversation(request.id_conversation)
+            id_conversation = conversation.id_conversation
+
+            # Paso 2: Guardar mensaje del usuario
+            user_msg = conversation_service.save_message(
+                id_conversation=id_conversation,
+                sender="user",
+                content=request.message
+            )
+
+            # Paso 3: Guardar mensaje del bot
+            bot_msg = conversation_service.save_message(
+                id_conversation=id_conversation,
+                sender="bot",
+                content=response.content,
+                cluster_id=response.cluster_id,
+                confidence_score=response.confidence_score
+            )
+
+            # Paso 4: Actualizar id_conversation en la respuesta
+            response.id_conversation = id_conversation
+
             return response
 
         except Exception as e:
             # --------------------------------------------------------
-            # 6️. Manejo de errores
+            # 7. Manejo de errores
             # --------------------------------------------------------
             logger.error(f"\n \n--- Error al procesar mensaje: {e}", exc_info=True)
             raise HTTPException(

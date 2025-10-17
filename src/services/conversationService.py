@@ -1,56 +1,50 @@
 import logging
 from datetime import datetime
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from src.models.conversationModel import Conversation, Message
 from src.core.database import SessionLocal
+from src.models.conversationModel import Conversation, Message
+from contextlib import contextmanager
+from typing import Generator
 
 logger = logging.getLogger(__name__)
 
 class ConversationService:
-    """
-    Servicio encargado de:
-    - Crear y mantener conversaciones
-    - Guardar mensajes del usuario y del bot
-    - Recuperar historial de una conversación
-    """
+    """Servicio de gestión de conversaciones y mensajes."""
 
     def __init__(self):
-        # Inyectar la sesión de la base de datos
-        self.session = SessionLocal()
-        
-    # ------------------------------------------------------------
-    # MÉTODO 1: Guardar o crear la conversación
-    # ------------------------------------------------------------
-    def get_or_create_conversation(self, id_conversation: int | None) -> Conversation:
-        """
-        Retorna una conversación existente o crea una nueva si no existe.
-        si no existe:
-                Crea una nueva conversación en la base de datos y la guarda.
-                Permite opcionalmente definir un tiempo de finalización.
-                Retorna el objeto Conversation creado.
+        self.model = Conversation
 
-        """
-        session: Session = SessionLocal()
+
+    @contextmanager
+    def get_session(self) -> Generator[Session, None, None]:
+        """Proporciona una sesión de base de datos."""
+        session = SessionLocal()
         try:
-            if id_conversation and session.query(Conversation).filter_by(id_conversation=id_conversation).first():
-                return session.query(Conversation).get(id_conversation)
-            else:
-                new_conv = Conversation(start_time=datetime.utcnow())
-                session.add(new_conv)
-                session.commit()
-                session.refresh(new_conv)
-                logger.info(f"\n --- Nueva conversación creada con id={new_conv.id_conversation}")
-                return new_conv
-        except Exception as e:
-            session.rollback()
-            logger.error(f"\n --- Error en get_or_create_conversation: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail="Error al obtener o crear conversación")
+            yield session
         finally:
             session.close()
 
     # ------------------------------------------------------------
-    # MÉTODO 2: Guardar mensaje
+    # Crear o recuperar una conversación
+    # ------------------------------------------------------------
+    def get_or_create_conversation(self, id_conversation: int | None) -> Conversation:
+        """Retorna una conversación existente o crea una nueva si no existe."""
+        with SessionLocal() as db:
+            if id_conversation:
+                conversation = db.query(Conversation).filter_by(id_conversation=id_conversation).first()
+                if conversation:
+                    return conversation
+                logger.warning(f"Conversación {id_conversation} no encontrada. Creando nueva...")
+            # Crear nueva conversación
+            new_conv = Conversation(start_time=datetime.utcnow())
+            db.add(new_conv)
+            db.commit()
+            db.refresh(new_conv)
+            logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
+            return new_conv
+
+    # ------------------------------------------------------------
+    # Guardar un mensaje
     # ------------------------------------------------------------
     def save_message(
         self,
@@ -60,23 +54,16 @@ class ConversationService:
         cluster_id: int | None = None,
         confidence_score: float | None = None
     ) -> Message:
-        """
-        Guarda un mensaje en la base de datos.
-        Si no existe la conversación, la crea.
-        """
-        session: Session = SessionLocal()
-        try:
-            # Si no hay id de conversación, crear una nueva
+        """Guarda un mensaje en la base de datos (crea conversación si no existe)."""
+        with SessionLocal() as db:
             if id_conversation is None:
-
                 conversation = Conversation(start_time=datetime.utcnow())
-                session.add(conversation)
-                session.commit()
-                session.refresh(conversation)
+                db.add(conversation)
+                db.commit()
+                db.refresh(conversation)
                 id_conversation = conversation.id_conversation
-                logger.info(f"\n --- Nueva conversación creada con id=     {id_conversation}")
+                logger.info(f"Nueva conversación creada con id={id_conversation}")
 
-            # Crear mensaje
             message = Message(
                 id_conversation=id_conversation,
                 sender=sender,
@@ -85,40 +72,69 @@ class ConversationService:
                 confidence_score=confidence_score,
                 created_at=datetime.utcnow()
             )
-            session.add(message)
-            session.commit()
-            session.refresh(message)
-            logger.info(f"\n --- Mensaje guardado: sender=   {sender}, id_conversation=   {id_conversation}")
+            db.add(message)
+            db.commit()
+            db.refresh(message)
+            logger.info(f"Mensaje guardado → id_conv={id_conversation}, sender={sender}")
             return message
 
-        except Exception as e:
-            session.rollback()
-            logger.error(f"\n --- Error al guardar mensaje: {e}", exc_info=True)
-            # No interrumpimos la sesión del chatbot
-            raise HTTPException(status_code=500, detail="Error al guardar el mensaje")
-        finally:
-            session.close()
-
     # ------------------------------------------------------------
-    # MÉTODO 3: Recuperar historial
+    # Recuperar historial
     # ------------------------------------------------------------
-    def get_history(self, id_conversation: int) -> list[Message]:
-        """
-        Recupera todos los mensajes de una conversación en orden cronológico.
-        """
-        session: Session = SessionLocal()
-        try:
+    def get_conversation_history(self, id_conversation: int) -> list[dict]:
+        """Recupera los mensajes de una conversación en orden cronológico."""
+        with SessionLocal() as db:
             messages = (
-                session.query(Message)
+                db.query(Message)
                 .filter(Message.id_conversation == id_conversation)
                 .order_by(Message.created_at.asc())
                 .all()
             )
             if not messages:
-                logger.warning(f"\n ---  No se encontraron mensajes para id_conversation={id_conversation}")
-            return messages
-        except Exception as e:
-            logger.error(f"\n ---  Error al recuperar historial: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail="Error al recuperar historial de mensajes")
-    
+                logger.warning(f"No se encontraron mensajes para la conversación {id_conversation}")
+            return [
+                {"sender": m.sender, "content": m.content, "created_at": m.created_at}
+                for m in messages
+            ]
 
+    # ------------------------------------------------------------
+    # Listar conversaciones
+    # ------------------------------------------------------------
+    def list_conversations(self, limit: int = 20) -> list[Conversation]:
+        """Lista las conversaciones más recientes."""
+        with SessionLocal() as db:
+            return (
+                db.query(Conversation)
+                .order_by(Conversation.start_time.desc())
+                .limit(limit)
+                .all()
+            )
+
+    # ------------------------------------------------------------
+    # Eliminar conversación
+    # ------------------------------------------------------------
+    def delete_conversation(self, id_conversation: int) -> dict:
+        """Elimina una conversación y sus mensajes."""
+        with SessionLocal() as db:
+            convo = db.query(Conversation).filter_by(id_conversation=id_conversation).first()
+            if not convo:
+                logger.warning(f"Intento de eliminar conversación inexistente: {id_conversation}")
+                return {"status": "error", "message": "Conversación no encontrada"}
+
+            db.delete(convo)
+            db.commit()
+            logger.info(f"Conversación {id_conversation} eliminada correctamente")
+            return {"status": "ok", "message": f"Conversación {id_conversation} eliminada"}
+    
+    # ------------------------------------------------------------
+    # Guardar nueva conversación
+    # ------------------------------------------------------------
+    def save_conversation(self) -> Conversation:
+        """Crea y guarda una nueva conversación en la base de datos."""
+        with SessionLocal() as db:
+            new_conv = Conversation(start_time=datetime.utcnow())
+            db.add(new_conv)
+            db.commit()
+            db.refresh(new_conv)
+            logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
+            return new_conv

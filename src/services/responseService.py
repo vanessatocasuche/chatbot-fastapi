@@ -13,7 +13,7 @@ import numpy as np
 from datetime import datetime
 from fastapi import HTTPException
 from src.schemas.chatSchema import ChatRequest, ChatResponse
-from src.services.clusterService import cluster_service
+from src.services.modelService import models_service
 from src.services.conversationService import ConversationService  # Import ConversationService
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class ResponseService:
     """
 
     def __init__(self):
-        self.cluster_service = cluster_service
+        self.models_service = models_service
         self.conversation_service = ConversationService()  # Inicializar ConversationService
 
     # ------------------------------------------------------------
@@ -41,9 +41,8 @@ class ResponseService:
         """
         Procesa el mensaje recibido y genera una respuesta adecuada.
         """
-
         #  Validar que los modelos estén listos
-        if not self.cluster_service.is_ready():
+        if not self.models_service.is_ready():
             logger.error("\n \n--- Los modelos no están listos.")
             raise HTTPException(status_code=503, detail="Modelos no cargados correctamente.")
 
@@ -56,13 +55,13 @@ class ResponseService:
             # --------------------------------------------------------
             # 1️. Generar embeddings
             # --------------------------------------------------------
-            embedding_model = self.cluster_service.embedding_model
+            embedding_model = self.models_service.embedding_model
             user_embedding = embedding_model.encode([request.message])[0]  # vector de 384 dimensiones típicamente
 
             # --------------------------------------------------------
             # 2️. Predecir clúster
             # --------------------------------------------------------
-            cluster_model = self.cluster_service.cluster_model
+            cluster_model = self.models_service.cluster_model
             cluster_id = int(cluster_model.predict([user_embedding])[0])
 
             # --------------------------------------------------------
@@ -77,7 +76,7 @@ class ResponseService:
             # --------------------------------------------------------
             # 4️. Obtener respuesta según clúster
             # --------------------------------------------------------
-            respuesta = self.cluster_service.respuestas.get(
+            respuesta = self.models_service.respuestas.get(
                 cluster_id,
                 "Lo siento, no tengo una respuesta específica para tu mensaje."
             )

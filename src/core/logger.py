@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger("cluster_service")
+logger = logging.getLogger("models_service")
 logger.setLevel(logging.INFO)
 
 # Si no existe handler, agregar uno básico

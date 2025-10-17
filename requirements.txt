@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+sentence-transformers
+scikit-learn
+numpy
+sqlalchemy
+alembic    # opcional si quieres migraciones
+python-multipart  # si luego subes archivos
+# version de pyhton 3.12
+# pip version 25.2

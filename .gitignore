@@ -1,0 +1,7 @@
+/venv
+/__pycache__/
+db/*
+data/*
+*.pyc
+/model/vectorizer/*.bin
+/model/vectorizer/*.pkl

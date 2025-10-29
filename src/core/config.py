@@ -25,4 +25,4 @@ RESPUESTAS_DIR = BASE_DIR / "model" / "respuestas.json"
 
 # cmd = f'icacls "{carpeta}" /grant {usuario}:(F) /T'
 # subprocess.run(cmd, shell=True)
-# print("✅ Permisos ACL actualizados para el usuario:", usuario)
+# print(" Permisos ACL actualizados para el usuario:", usuario)

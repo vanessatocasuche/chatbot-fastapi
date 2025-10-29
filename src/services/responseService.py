@@ -84,6 +84,9 @@ class ResponseService:
             # --------------------------------------------------------
             # 5️. Crear objeto de respuesta
             # --------------------------------------------------------
+            if isinstance(respuesta, dict):
+                respuesta = respuesta.get("message") or str(respuesta)
+
             response = ChatResponse(
                 content=respuesta,
                 cluster_id=cluster_id,

@@ -50,3 +50,23 @@ async def chat_ui(request: Request):
     Página principal del chatbot (frontend)
     """
     return templates.TemplateResponse("chat.html", {"request": request})
+
+
+@app.get("/models", response_class=HTMLResponse)
+async def models_ui(request: Request):
+    """
+    Página de administración de modelos
+    """
+    return templates.TemplateResponse("models.html", {"request": request})
+
+
+@app.get("/conversations", response_class=HTMLResponse)
+async def conversations_ui(request: Request):
+    """
+    Página de administración de conversaciones
+    """
+    return templates.TemplateResponse("conversations.html", {"request": request})
+
+@app.get("/conversations", response_class=HTMLResponse)
+async def conversations_ui(request: Request):
+    return templates.TemplateResponse("conversations.html", {"request": request})

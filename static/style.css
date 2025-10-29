@@ -1,21 +1,62 @@
+/* === Configuración general === */
 body {
-  font-family: sans-serif;
-  background-color: #f7f9fc;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #f9fafb;
+  color: #111827;
+  margin: 0;
+  padding: 0;
 }
 
+/* === Cabecera global === */
+header {
+  background-color: #1e3a8a;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+header button {
+  background-color: #2563eb;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+header button:hover {
+  background-color: #1d4ed8;
+}
+
+/* === Contenido principal === */
+main {
+  padding: 2rem;
+}
+
+/* === Contenedores genéricos === */
+.container,
 .chat-container {
-  background: #fff;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  width: 400px;
-  max-height: 90vh;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  margin: auto;
+  max-width: 700px;
+}
+
+/* === Chat === */
+.chat-container {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  height: 80vh;
 }
 
 .chat-box {
@@ -25,9 +66,11 @@ body {
   border-radius: 8px;
   overflow-y: auto;
   margin-bottom: 10px;
+  background-color: #f3f4f6;
 }
 
-.user, .bot {
+.user,
+.bot {
   padding: 8px 12px;
   border-radius: 8px;
   margin: 4px 0;
@@ -45,6 +88,7 @@ body {
   align-self: flex-start;
 }
 
+/* === Formulario de chat === */
 #chat-form {
   display: flex;
   gap: 10px;
@@ -55,4 +99,89 @@ body {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
+}
+
+#chat-form button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#chat-form button:hover {
+  background-color: #1d4ed8;
+}
+
+/* === Tarjetas (conversaciones, modelos, etc.) === */
+.card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.card,
+.conversation-card {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conversation-card strong {
+  color: #1e3a8a;
+}
+
+/* === Botones de acción === */
+button.action-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-view {
+  background-color: #2563eb;
+  color: white;
+}
+
+.btn-delete {
+  background-color: #dc2626;
+  color: white;
+}
+
+/* === Historial de conversación === */
+#history-section {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+#history-content {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 6px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+/* === Resultados y alertas === */
+.result {
+  margin-top: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 10px;
+  font-family: monospace;
+  color: #333;
 }

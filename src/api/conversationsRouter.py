@@ -9,6 +9,7 @@ router = APIRouter()
 conversation_service = ConversationService()
 
 @router.get("")
+
 async def list_conversations(limit: int = 20):
     """
     Lista las conversaciones más recientes.

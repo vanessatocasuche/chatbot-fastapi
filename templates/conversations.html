@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Conversaciones</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Conversaciones</h1>
+        <button id="reload-btn">Recargar</button>
+    </header>
+
+    <main>
+        <section id="list-section">
+            <h2>Lista de conversaciones</h2>
+            <div id="conversations-list" class="card-container">
+                <p>Cargando conversaciones...</p>
+            </div>
+        </section>
+
+        <section id="history-section" hidden>
+            <h2>Historial</h2>
+            <div id="history-content"></div>
+            <button id="close-history" class="action-btn">Cerrar</button>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='conversations.js') }}"></script>
+</body>
+</html>

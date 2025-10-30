@@ -10,4 +10,4 @@ python-multipart  # si luego subes archivos
 jinja2 
 python-multipart
 # version de pyhton 3.12
-# pip version 25.2
+# pip version 25.3

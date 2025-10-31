@@ -7,7 +7,8 @@ import numpy as np
 from fastapi import HTTPException, UploadFile
 from pathlib import Path
 from src.core.config import VALID_MODEL_TYPES
-#from tensorflow.keras.models import load_model
+import tensorflow as tf
+from keras.models import load_model
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -72,7 +73,7 @@ class ModelService:
         try:
             if tipo == "autoencoder":
                 pass
-                # cls._models_cache["autoencoder"] = load_model(path)
+                cls._models_cache["autoencoder"] = load_model(path)
             elif tipo == "embeddings":
                 cls._models_cache["embeddings"] = np.load(path)
             elif tipo == "matriz":

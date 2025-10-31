@@ -24,7 +24,7 @@ VALID_MODEL_TYPES = ["autoencoder", "embeddings", "matriz", "cursos"]
 AUTOENCODER_DIR = BASE_DIR / "model" / "autoencoder_model.keras"
 EMBEDDINGS_DIR = DATA_DIR / "embeddings.npy"
 MATRIZ_DIR = DATA_DIR / "matriz_de_similitud.npy"
-CURSOS_DIR = DATA_DIR / "cursos.csv"
+CURSOS_DIR = DATA_DIR / "cursos.npy"
 
 # import subprocess
 # import getpass

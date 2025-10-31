@@ -79,7 +79,7 @@ class ModelService:
             elif tipo == "matriz":
                 cls._models_cache["matriz"] = np.load(path)
             elif tipo == "cursos":
-                cls._models_cache["cursos"] = pd.read_csv(path)
+                cls._models_cache["cursos"] = np.load(path)
 
             logger.info(f"✅ Archivo '{tipo}' cargado correctamente desde {path}")
             return {"message": f"Archivo '{tipo}' cargado correctamente."}

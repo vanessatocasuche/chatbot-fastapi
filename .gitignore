@@ -6,3 +6,4 @@ data/*
 *.pyc
 /model/vectorizer/*.bin
 /model/vectorizer/*.pkl
+files/*

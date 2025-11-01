@@ -11,18 +11,21 @@ form.addEventListener("submit", async (e) => {
   input.value = "";
 
   try {
-    const response = await fetch("/api/chat/send_message", {
+    const response = await fetch("/api/chatbot/message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
     });
 
-    if (!response.ok) throw new Error("Error del servidor");
+    if (!response.ok) {
+      throw new Error("Error al comunicarse con el servidor");
+    }
 
     const data = await response.json();
-    appendMessage("bot", data.response || "Sin respuesta 😕");
-  } catch (err) {
-    appendMessage("bot", "Error al conectar con el chatbot ❌");
+    appendMessage("bot", data.reply);
+  } catch (error) {
+    console.error(error);
+    appendMessage("bot", "⚠️ Hubo un problema al procesar tu mensaje.");
   }
 });
 

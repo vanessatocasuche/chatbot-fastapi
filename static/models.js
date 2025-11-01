@@ -24,6 +24,7 @@ async function fetchStatus() {
         <li>📘 Embeddings: <strong>${data.embeddings ? "✅ Cargado" : "❌ No cargado"}</strong></li>
         <li>📊 Matriz: <strong>${data.matriz ? "✅ Cargado" : "❌ No cargado"}</strong></li>
         <li>📚 Cursos: <strong>${data.cursos ? "✅ Cargado" : "❌ No cargado"}</strong></li>
+        <li>📝 Cursos Info: <strong>${data.cursos_info ? "✅ Cargado" : "❌ No cargado"}</strong></li>
       </ul>
     `;
   } catch (err) {

@@ -2,13 +2,14 @@ import logging
 from turtle import pd
 from src.core.config import RESPUESTAS_DIR
 from src.core.logger import logger
-from src.core.config import AUTOENCODER_DIR, EMBEDDINGS_DIR, MATRIZ_DIR, CURSOS_DIR
+from src.core.config import AUTOENCODER_DIR, EMBEDDINGS_DIR, MATRIZ_DIR, CURSOS_DIR, CURSOS_INFO_DIR
 import numpy as np
 from fastapi import HTTPException, UploadFile
 from pathlib import Path
 from src.core.config import VALID_MODEL_TYPES
 import tensorflow as tf
 from keras.models import load_model
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -30,6 +31,7 @@ class ModelService:
         "embeddings": EMBEDDINGS_DIR,
         "matriz": MATRIZ_DIR,
         "cursos": CURSOS_DIR,
+        "cursos_info": CURSOS_INFO_DIR,
     }
 
     _models_cache = {tipo: None for tipo in VALID_MODEL_TYPES}
@@ -80,6 +82,8 @@ class ModelService:
                 cls._models_cache["matriz"] = np.load(path)
             elif tipo == "cursos":
                 cls._models_cache["cursos"] = np.load(path)
+            elif tipo == "cursos_info":
+                cls._models_cache["cursos_info"] = pd.read_csv(path)
 
             logger.info(f"✅ Archivo '{tipo}' cargado correctamente desde {path}")
             return {"message": f"Archivo '{tipo}' cargado correctamente."}

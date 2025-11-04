@@ -1,6 +1,5 @@
 import logging
 from turtle import pd
-from src.core.config import RESPUESTAS_DIR
 from src.core.logger import logger
 from src.core.config import AUTOENCODER_DIR, EMBEDDINGS_DIR, MATRIZ_DIR, CURSOS_DIR, CURSOS_INFO_DIR
 import numpy as np

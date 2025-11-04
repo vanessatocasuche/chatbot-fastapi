@@ -33,18 +33,3 @@ class ChatResponse(BaseModel):
         default_factory=datetime.utcnow,
         description="Marca de tiempo en la que se generó la respuesta."
     )
-
-
-class FeedbackRequest(BaseModel):
-    """Modelo de entrada para enviar retroalimentación de un mensaje."""
-    id_message: int = Field(..., description="Identificador del mensaje asociado.")
-    feedback: str = Field(..., description="Comentario o evaluación del usuario sobre la respuesta del chatbot.")
-    sentiment: Optional[str] = Field(None, description="Sentimiento detectado (positivo, negativo, neutro).")
-    topic: Optional[str] = Field(None, description="Tema o categoría asociada al feedback.")
-    keywords: Optional[str] = Field(None, description="Palabras clave identificadas en el feedback.")
-
-
-class FeedbackResponse(BaseModel):
-    """Modelo de salida después de almacenar la retroalimentación."""
-    message: str = Field(..., description="Mensaje de confirmación del almacenamiento del feedback.")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Marca de tiempo del registro del feedback.")

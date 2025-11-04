@@ -1,4 +1,3 @@
-from src.services.modelService import models_service
 from fastapi import HTTPException
 import numpy as np
 import logging

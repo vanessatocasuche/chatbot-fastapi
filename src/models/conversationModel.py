@@ -33,22 +33,6 @@ class Message(Base):
 
     # Relaciones
     conversation = relationship("Conversation", back_populates="messages")
-    feedbacks = relationship("Feedback", back_populates="message", cascade="all, delete-orphan")
-
-
-class Feedback(Base):
-    __tablename__ = "feedback"
-
-    id_feedback = Column(Integer, primary_key=True, index=True)
-    id_message = Column(Integer, ForeignKey("messages.id_message", ondelete="CASCADE"))
-    feedback = Column(Text, nullable=True)
-    sentiment = Column(String(50), nullable=True)
-    topic = Column(String(100), nullable=True)
-    keywords = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relaciones
-    message = relationship("Message", back_populates="feedbacks")
 
 
 # if __name__ == "__main__":

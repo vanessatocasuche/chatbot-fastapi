@@ -1,7 +1,0 @@
-{
-  "architectures": ["BertForSequenceClassification"],
-  "model_type": "bert",
-  "max_seq_length": 128,
-  "hidden_size": 384,
-  "embedding_model": "test-sentence-bert"
-}

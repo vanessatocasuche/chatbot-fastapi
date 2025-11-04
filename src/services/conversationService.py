@@ -42,7 +42,31 @@ class ConversationService:
             db.refresh(new_conv)
             logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
             return new_conv
-
+    # ------------------------------------------------------------
+    # Crear una conversación
+    # ------------------------------------------------------------
+    def create_conversation(self ) -> Conversation:
+        """Crea una nueva conversación."""
+        with SessionLocal() as db:
+            new_conv = Conversation(start_time=datetime.utcnow())
+            db.add(new_conv)
+            db.commit()
+            db.refresh(new_conv)
+            logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
+            return new_conv
+        
+    # ------------------------------------------------------------
+    # Traer una conversación ()GET
+    # ------------------------------------------------------------
+    def get_conversation(self, id_conversation: int) -> Conversation | None:
+        """Trae una conversación existente por su ID."""
+        with SessionLocal() as db:
+            conversation = db.query(Conversation).filter_by(id_conversation=id_conversation).first()
+            if conversation:
+                return conversation
+            logger.warning(f"Conversación {id_conversation} no encontrada.")
+            return None
+    
     # ------------------------------------------------------------
     # Guardar un mensaje
     # ------------------------------------------------------------
@@ -126,15 +150,9 @@ class ConversationService:
             logger.info(f"Conversación {id_conversation} eliminada correctamente")
             return {"status": "ok", "message": f"Conversación {id_conversation} eliminada"}
     
-    # ------------------------------------------------------------
-    # Guardar nueva conversación
-    # ------------------------------------------------------------
-    def save_conversation(self) -> Conversation:
-        """Crea y guarda una nueva conversación en la base de datos."""
-        with SessionLocal() as db:
-            new_conv = Conversation(start_time=datetime.utcnow())
-            db.add(new_conv)
-            db.commit()
-            db.refresh(new_conv)
-            logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
-            return new_conv
+
+        
+# ============================================================
+# SINGLETON INSTANCE
+conversation_service = ConversationService()
+# ============================================================

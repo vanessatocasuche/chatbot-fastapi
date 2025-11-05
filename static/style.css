@@ -185,3 +185,19 @@ button.action-btn {
   font-family: monospace;
   color: #333;
 }
+
+/* === Botón de reinicio de chat === */
+.reset-btn {
+  margin-top: 12px;
+  padding: 8px 12px;
+  width: 100%;
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  background-color: #b94743;
+}

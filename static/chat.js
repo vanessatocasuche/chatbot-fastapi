@@ -41,6 +41,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+// Función para agregar mensajes al chat
 function appendMessage(sender, text) {
   const msg = document.createElement("div");
   msg.classList.add(sender);
@@ -48,3 +49,29 @@ function appendMessage(sender, text) {
   chatBox.appendChild(msg);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+// Cargar historial de conversación al iniciar (si existe)
+window.addEventListener("load", async () => {
+  const id_conversation_ = sessionStorage.getItem("id_conversation");
+  if (id_conversation_) {
+    try {
+      const response = await fetch(`/api/chatbot/message/${id_conversation_}`);
+      const data = await response.json();
+      data.messages.forEach((msg) => {
+        appendMessage(msg.sender, msg.text);
+      });
+    } catch (error) {
+      console.error("Error al cargar el historial de conversación:", error);
+    }
+  }
+});
+
+
+const resetBtn = document.getElementById("reset-chat");
+resetBtn.addEventListener("click", () => {
+  const confirmar = confirm("¿Seguro que deseas iniciar una nueva conversación? Se borrará el historial.");
+  if (confirmar) {
+    sessionStorage.removeItem("id_conversation");
+    document.getElementById("chat-box").innerHTML = "";
+  }
+});

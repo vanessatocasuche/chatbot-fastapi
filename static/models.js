@@ -10,6 +10,35 @@ const loadSelect = document.getElementById("load-type");
 const loadBtn = document.getElementById("btn-load");
 const loadResult = document.getElementById("load-result");
 
+function renderModelStatus(tipo, isLoaded) {
+  return `
+    <li style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span>
+        ${emojiFor(tipo)} ${capitalize(tipo)}:
+        <strong>${isLoaded ? "✅ Cargado" : "❌ No cargado"}</strong>
+      </span>
+
+      ${isLoaded ? `<a href="${API_BASE}/${tipo}/download" class="download-btn">⬇️ Descargar</a>` : ""}
+    </li>
+  `;
+}
+
+function emojiFor(tipo) {
+  switch (tipo) {
+    case "autoencoder": return "🧠";
+    case "embeddings": return "📘";
+    case "matriz": return "📊";
+    case "cursos": return "📚";
+    case "cursos_info": return "📝";
+    default: return "📦";
+  }
+}
+
+function capitalize(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+
 // === CONSULTAR ESTADO DE LOS MODELOS ===
 async function fetchStatus() {
   statusDiv.textContent = "Consultando estado...";
@@ -17,14 +46,13 @@ async function fetchStatus() {
     const res = await fetch(`${API_BASE}/status`);
     if (!res.ok) throw new Error("Error consultando estado");
     const data = await res.json();
-
     statusDiv.innerHTML = `
       <ul>
-        <li>🧠 Autoencoder: <strong>${data.autoencoder ? "✅ Cargado" : "❌ No cargado"}</strong></li>
-        <li>📘 Embeddings: <strong>${data.embeddings ? "✅ Cargado" : "❌ No cargado"}</strong></li>
-        <li>📊 Matriz: <strong>${data.matriz ? "✅ Cargado" : "❌ No cargado"}</strong></li>
-        <li>📚 Cursos: <strong>${data.cursos ? "✅ Cargado" : "❌ No cargado"}</strong></li>
-        <li>📝 Cursos Info: <strong>${data.cursos_info ? "✅ Cargado" : "❌ No cargado"}</strong></li>
+        ${renderModelStatus("autoencoder", data.autoencoder)}
+        ${renderModelStatus("embeddings", data.embeddings)}
+        ${renderModelStatus("matriz", data.matriz)}
+        ${renderModelStatus("cursos", data.cursos)}
+        ${renderModelStatus("cursos_info", data.cursos_info)}
       </ul>
     `;
   } catch (err) {
@@ -86,6 +114,18 @@ loadBtn.addEventListener("click", async () => {
   } catch (err) {
     console.error(err);
     loadResult.textContent = `❌ ${err.message}`;
+  }
+});
+
+// === DESCARGAR MODELO ===
+loadSelect.addEventListener("change", () => {
+  const tipo = loadSelect.value;
+  if (tipo) {
+    loadBtn.href = `${API_BASE}/${tipo}/download`;
+    loadBtn.download = `${tipo}_model`;
+    loadBtn.style.display = "inline-block";
+  } else {
+    loadBtn.style.display = "none";
   }
 });
 

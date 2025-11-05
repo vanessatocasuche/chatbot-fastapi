@@ -9,6 +9,7 @@ from src.core.config import VALID_MODEL_TYPES
 import tensorflow as tf
 from keras.models import load_model
 import pandas as pd
+from fastapi.responses import FileResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -109,7 +110,23 @@ class ModelService:
         except Exception as e:
             logger.error(f"Error en inicialización: {e}")
             return False
-        
+    
+    @classmethod
+    def download_file(cls, tipo: str):
+        if tipo not in cls._path_map:
+            raise HTTPException(status_code=400, detail=f"Tipo no válido: {tipo}")
+
+        path = cls._path_map[tipo]
+        if not path.exists():
+            raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {path}")
+
+        logger.info(f"✅ Archivo '{tipo}' descargado correctamente desde {path}")
+        return FileResponse(
+            path=path,
+            filename=path.name,
+            media_type="application/octet-stream"
+        )
+    
 # ============================================================
 # SINGLETON (instancia global)
 # ============================================================

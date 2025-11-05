@@ -28,6 +28,11 @@ async def model_status():
     """Verifica qué modelos están cargados en memoria."""
     return ModelService.is_ready()
 
+@router.get("/{tipo}/download")
+def download_model(tipo: str):
+    """Descarga el archivo de modelo correspondiente al tipo especificado."""
+    return ModelService.download_file(tipo)
+
 
 
 

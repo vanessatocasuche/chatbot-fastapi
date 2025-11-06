@@ -185,3 +185,35 @@ button.action-btn {
   font-family: monospace;
   color: #333;
 }
+
+/* === Botón de reinicio de chat === */
+.reset-btn {
+  margin-top: 12px;
+  padding: 8px 12px;
+  width: 100%;
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  background-color: #b94743;
+}
+
+/* ===  Botón de descarga de modelos === */
+.download-btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.download-btn:hover {
+  background-color: #1d4ed8;
+}
+

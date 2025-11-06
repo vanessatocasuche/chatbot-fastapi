@@ -42,7 +42,31 @@ class ConversationService:
             db.refresh(new_conv)
             logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
             return new_conv
-
+    # ------------------------------------------------------------
+    # Crear una conversación
+    # ------------------------------------------------------------
+    def create_conversation(self ) -> Conversation:
+        """Crea una nueva conversación."""
+        with SessionLocal() as db:
+            new_conv = Conversation(start_time=datetime.utcnow())
+            db.add(new_conv)
+            db.commit()
+            db.refresh(new_conv)
+            logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
+            return new_conv
+        
+    # ------------------------------------------------------------
+    # Traer una conversación ()GET
+    # ------------------------------------------------------------
+    def get_conversation(self, id_conversation: int) -> Conversation | None:
+        """Trae una conversación existente por su ID."""
+        with SessionLocal() as db:
+            conversation = db.query(Conversation).filter_by(id_conversation=id_conversation).first()
+            if conversation:
+                return conversation
+            logger.warning(f"Conversación {id_conversation} no encontrada.")
+            return None
+    
     # ------------------------------------------------------------
     # Guardar un mensaje
     # ------------------------------------------------------------
@@ -63,6 +87,15 @@ class ConversationService:
                 db.refresh(conversation)
                 id_conversation = conversation.id_conversation
                 logger.info(f"Nueva conversación creada con id={id_conversation}")
+            else:
+                conversation = db.query(Conversation).filter_by(id_conversation=id_conversation).first()
+                if not conversation:
+                    # Si no existe (por algún error), crearla igual
+                    conversation = Conversation(id_conversation=id_conversation, start_time=datetime.utcnow())
+                    db.add(conversation)
+                    db.commit()
+                    db.refresh(conversation)
+                    logger.warning(f"Conversación {id_conversation} no existía, creada nuevamente.")
 
             message = Message(
                 id_conversation=id_conversation,
@@ -73,6 +106,8 @@ class ConversationService:
                 created_at=datetime.utcnow()
             )
             db.add(message)
+            if sender == "user":
+                conversation.end_time = datetime.utcnow()
             db.commit()
             db.refresh(message)
             logger.info(f"Mensaje guardado → id_conv={id_conversation}, sender={sender}")
@@ -126,15 +161,23 @@ class ConversationService:
             logger.info(f"Conversación {id_conversation} eliminada correctamente")
             return {"status": "ok", "message": f"Conversación {id_conversation} eliminada"}
     
-    # ------------------------------------------------------------
-    # Guardar nueva conversación
-    # ------------------------------------------------------------
-    def save_conversation(self) -> Conversation:
-        """Crea y guarda una nueva conversación en la base de datos."""
+
+    # ============================================================
+    # Actualiza la hora de la última actividad de la conversación
+    # ============================================================
+    def update_last_activity(self, id_conversation: int) -> None:
+        """Actualiza la hora de la última actividad de la conversación."""
         with SessionLocal() as db:
-            new_conv = Conversation(start_time=datetime.utcnow())
-            db.add(new_conv)
-            db.commit()
-            db.refresh(new_conv)
-            logger.info(f"Nueva conversación creada con id={new_conv.id_conversation}")
-            return new_conv
+            conversation = db.query(Conversation).filter_by(id_conversation=id_conversation).first()
+            if conversation:
+                conversation.last_activity = datetime.utcnow()
+                db.commit()
+                logger.info(f"Última actividad de la conversación {id_conversation} actualizada.")
+            else:
+                logger.warning(f"Conversación {id_conversation} no encontrada para actualizar última actividad.")
+
+        
+# ============================================================
+# SINGLETON INSTANCE
+conversation_service = ConversationService()
+# ============================================================

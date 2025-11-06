@@ -1,4 +1,9 @@
+0. Instalar python 
+crt + sft + p
+select interpreter 
+elegir version de python
 1. Crear un entorno virtual
+
 
 Ubícate en la raíz de tu proyecto y ejecuta:
 

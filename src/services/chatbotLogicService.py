@@ -1,6 +1,16 @@
 from datetime import datetime
-from src.services.recommenderService import RecommenderService
-from src.services.conversationService import ConversationService, conversation_service
+import logging
+from src.services.recommenderService import recommender_service
+from src.services.conversationService import conversation_service
+from src.services.modelService import models_service
+
+
+# Estado de conversaciones (memoria temporal)
+conversation_state = {}  
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class ChatbotLogicService:
     """
@@ -8,64 +18,111 @@ class ChatbotLogicService:
     Gestiona el flujo de diálogo y persistencia.
     """
 
-    def __init__(self):
+    def __init__(self, df_final=None, X_embeddings=None):
         self.conversation_service = conversation_service
+        self.df_final = df_final
+        self.X_embeddings = X_embeddings
 
     def procesar_mensaje(self, user_message: str, id_conversation: str | None = None):
-        user_message = user_message.lower().strip()
+
+        # Validar que los modelos estén cargados
+        if self.df_final is None or self.X_embeddings is None:
+            reply = "⚠️ Aún no tengo cursos cargados. Pídele a un administrador que suba los modelos."
+            self.conversation_service.save_message(conv_id, "bot", reply)
+            return {"reply": reply, "id_conversation": conv_id}
+        
         # Validar que el mensaje no esté vacío
+        user_message = user_message.lower().strip()
         if not user_message:
             return {"reply": "⚠️ Por favor, ingresa un mensaje válido.", "id_conversation": id_conversation}
 
-        # Guardar mensaje del usuario
+        # Recuperar o crear conversación
         if id_conversation:
             conversation = self.conversation_service.get_conversation(int(id_conversation))
-            self.conversation_service.save_message(
-                id_conversation=int(id_conversation),
-                sender="user",
-                content=user_message
-            )
         else:
             conversation = self.conversation_service.create_conversation()
-            self.conversation_service.save_message(
-                id_conversation=conversation.id_conversation,
-                sender="user",
-                content=user_message
+
+        conv_id = conversation.id_conversation
+
+        # Guardar mensaje del usuario
+        self.conversation_service.save_message(conv_id, "user", user_message)
+
+         # Estado conversacional
+        if conv_id not in conversation_state:
+            conversation_state[conv_id] = {"step": 1, "tema": None, "modalidad": None, "duracion": None}
+
+        state = conversation_state[conv_id]
+
+
+        # ======================
+        # PASO 1 → Tema
+        # ======================
+        if state["step"] == 1:
+            state["tema"] = user_message
+            state["step"] = 2
+            reply = "Perfecto 👍 ¿Prefieres cursos virtuales o presenciales?"
+
+        # ======================
+        # PASO 2 → Modalidad
+        # ======================
+        elif state["step"] == 2:
+            if "virt" in user_message:
+                state["modalidad"] = "Virtual"
+            else:
+                state["modalidad"] = "Presencial"
+            state["step"] = 3
+            reply = "¿Buscas algo corto o un programa/diplomado más completo?"
+
+        # ======================
+        # PASO 3 → Duración
+        # ======================
+        elif state["step"] == 3:
+            if "corto" in user_message:
+                state["duracion"] = "Corto"
+            else:
+                state["duracion"] = "Programa"
+
+            # Ahora sí recomendar
+            resultados = recommender_service.obtener_recomendaciones_inteligentes(
+                texto_usuario=state["tema"],
+                df_final=self.df_final,
+                X_embeddings=self.X_embeddings,
+                num_recomendaciones=6
             )
 
-        # 3. Generar respuesta
-        if any(p in user_message for p in ["hola", "buenas", "hey"]):
-            reply = "👋 ¡Hola! Soy tu asistente de cursos. Cuéntame qué te gustaría aprender hoy."
+            # Filtrar por modalidad y duración
+            filtro = (
+                self.df_final['MODALIDAD'].str.contains(state["modalidad"], case=False, na=False)
+                & self.df_final['TIPO_OFERTA'].str.contains(state["duracion"], case=False, na=False)
+            )
 
-        elif any(p in user_message for p in [
-            "curso", "aprender", "quiero", "buscar", "interesado", "recomendar",
-            "sugerir", "cursos", "estudiar", "enseñanza", "formación", "capacitación",
-            "entrenamiento", "educación", "clase", "materia", "tema", "taller",
-            "programa", "especialización", "certificación", "seminario", "aprendizaje"
-        ]):
-            resultados = RecommenderService.obtener_recomendaciones(user_message)
-            if not resultados:
-                reply = "😔 No encontré cursos relacionados, intenta con otro tema."
-            else:
-                reply = "✨ Basado en tu interés, te recomiendo:\n\n"
-                for i, r in enumerate(resultados, 1):
-                    reply += f"{i}. {r['NOMBRE_OFERTA']} ({r['MODALIDAD']}, {r['TIPO_OFERTA']})\n"
-        else:
-            reply = "🤖 No estoy seguro de entenderte. ¿Podrías decirme qué tema te interesa aprender?"
+            filtrados = resultados[resultados['NOMBRE_OFERTA'].isin(self.df_final[filtro]['NOMBRE_OFERTA'])]
 
-        print(f"ConversacionID: {conversation.id_conversation}")
-        # Guardar mensaje del bot
-        self.conversation_service.save_message(
-            id_conversation=conversation.id_conversation,
-            sender="bot",
-            content=reply
-        )
+            if filtrados.empty:
+                filtrados = resultados
 
-        # 5. Devolver resultado al frontend
-        return {"reply": reply, "id_conversation": conversation.id_conversation}
+            reply = "✨ Basado en lo que me contaste, podrían interesarte:\n\n"
+            for i, row in enumerate(filtrados.itertuples(), 1):
+                reply += f"{i}. {row.NOMBRE_OFERTA} ({row.MODALIDAD}, {row.TIPO_OFERTA})\n"
 
+            reply += "\n¿Quieres que te explique más sobre alguno?"
+
+            # Resetear flujo
+            conversation_state.pop(conv_id, None)
+
+        # Guardar respuesta del bot
+        self.conversation_service.save_message(conv_id, "bot", reply)
+
+        # Devolver resultado al frontend
+        return {"reply": reply, "id_conversation": conv_id}
+        
+
+
+# Extraer los modelos cargados en memoria
+df_final = models_service._models_cache["cursos_info"]
+X_embeddings = models_service._models_cache["embeddings"]
 
 # ============================================================
 # SINGLETON INSTANCE
-chatbot_logic_service = ChatbotLogicService()
+chatbot_logic_service = ChatbotLogicService(df_final, X_embeddings)
 # ============================================================

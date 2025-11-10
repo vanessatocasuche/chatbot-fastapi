@@ -22,6 +22,36 @@ class RecommenderService:
     """
 
     @staticmethod
+    def obtener_recomendaciones_inteligentes(
+        texto_usuario,
+        df_final,
+        X_embeddings,
+        num_recomendaciones=5,
+        peso_embed=0.6,
+        peso_tfidf=0.4
+    ):
+        texto_usuario = texto_usuario.lower().strip()
+
+        corpus = df_final['NOMBRE_OFERTA'].fillna('').astype(str).tolist()
+
+        vect = TfidfVectorizer(max_features=5000)
+        tfidf_matrix = vect.fit_transform(corpus)
+        q_vec_tfidf = vect.transform([texto_usuario])
+        sims_tfidf = cosine_similarity(q_vec_tfidf, tfidf_matrix)[0]
+
+        top_indices = np.argsort(sims_tfidf)[::-1][:10]
+        q_vec_embed = X_embeddings[top_indices].mean(axis=0).reshape(1, -1)
+        sims_embed = cosine_similarity(q_vec_embed, X_embeddings)[0]
+
+        similitud_final = peso_embed * sims_embed + peso_tfidf * sims_tfidf
+
+        top_indices = np.argsort(similitud_final)[::-1][:num_recomendaciones * 3]
+        resultados = df_final.iloc[top_indices][['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA']]
+        resultados = resultados.drop_duplicates(subset='NOMBRE_OFERTA').head(num_recomendaciones)
+
+        return resultados
+
+    @staticmethod
     def obtener_recomendaciones(query: str, num_recomendaciones: int = 5):
         """
         Retorna cursos recomendados según el texto del usuario (query).
@@ -92,3 +122,8 @@ class RecommenderService:
         resultados = df_cursos.iloc[top_indices][['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA']].drop_duplicates()
 
         return resultados.to_dict(orient="records")
+    
+# ============================================================
+# SINGLETON INSTANCE
+# ============================================================
+recommender_service = RecommenderService()

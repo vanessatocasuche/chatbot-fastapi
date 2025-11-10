@@ -66,6 +66,21 @@ class ConversationService:
                 return conversation
             logger.warning(f"Conversación {id_conversation} no encontrada.")
             return None
+        
+    def get_messages(self, id_conversation: int) -> list[dict]:
+        with SessionLocal() as db:
+            messages = (
+                db.query(Message)
+                .filter(Message.id_conversation == id_conversation)
+                .order_by(Message.created_at.asc())
+                .all()
+            )
+            if not messages:
+                logger.warning(f"No se encontraron mensajes para la conversación {id_conversation}")
+            return [
+                {"sender": m.sender, "text": m.content, "created_at": m.created_at}
+                for m in messages
+            ]
     
     # ------------------------------------------------------------
     # Guardar un mensaje

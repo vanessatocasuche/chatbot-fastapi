@@ -75,3 +75,8 @@ resetBtn.addEventListener("click", () => {
     document.getElementById("chat-box").innerHTML = "";
   }
 });
+
+data.messages.forEach((msg) => {
+  console.log("Mensaje del historial:", msg);
+  appendMessage(msg.sender, msg.text )
+});

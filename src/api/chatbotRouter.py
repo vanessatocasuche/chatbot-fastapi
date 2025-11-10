@@ -20,3 +20,8 @@ def chatbot_message(msg: ChatMessage):
         id_conversation=msg.id_conversation
     )
     return response
+
+@router.get("/message/{id_conversation}")
+def get_conversation_messages(id_conversation: str):
+    messages = chatbot_service.conversation_service.get_messages(int(id_conversation))
+    return {"messages": messages}

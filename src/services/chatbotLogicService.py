@@ -24,6 +24,25 @@ class ChatbotLogicService:
         self.X_embeddings = X_embeddings
 
     def procesar_mensaje(self, user_message: str, id_conversation: str | None = None):
+        if id_conversation is None:
+            conversation = self.conversation_service.create_conversation()
+            conv_id = conversation.id_conversation
+
+            # Mensajes de bienvenida
+            welcome_messages = [
+                "🤖 ¡Hola! Soy tu asistente de recomendación de cursos.",
+                "Puedo ayudarte a encontrar opciones que se ajusten a tus intereses.",
+                "Cuéntame primero ¿En qué tema estás interesado? (Ej: salud, programación, liderazgo...)"
+            ]
+
+            # Guardar y devolver el último mensaje como respuesta inicial
+            for msg in welcome_messages[:-1]:
+                self.conversation_service.save_message(conv_id, "bot", msg)
+
+            reply = welcome_messages[-1]
+            self.conversation_service.save_message(conv_id, "bot", reply)
+
+            return {"reply": reply, "id_conversation": conv_id}
 
         # Validar que los modelos estén cargados
         if self.df_final is None or self.X_embeddings is None:
@@ -115,6 +134,10 @@ class ChatbotLogicService:
 
         # Devolver resultado al frontend
         return {"reply": reply, "id_conversation": conv_id}
+    
+    def get_messages(self, id_conversation: int):
+        return self.conversation_service.get_messages(id_conversation)
+    
         
 
 

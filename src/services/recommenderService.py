@@ -26,102 +26,81 @@ class RecommenderService:
         texto_usuario,
         df_final,
         X_embeddings,
-        num_recomendaciones=5,
+        num_recomendaciones=15,
         peso_embed=0.6,
         peso_tfidf=0.4
     ):
+        # Normalizar texto de entrada
         texto_usuario = texto_usuario.lower().strip()
 
+        # Construir corpus TF-IDF
         corpus = df_final['NOMBRE_OFERTA'].fillna('').astype(str).tolist()
 
-        vect = TfidfVectorizer(max_features=5000)
-        tfidf_matrix = vect.fit_transform(corpus)
-        q_vec_tfidf = vect.transform([texto_usuario])
-        sims_tfidf = cosine_similarity(q_vec_tfidf, tfidf_matrix)[0]
+        vect = TfidfVectorizer(max_features=3000)   # Limitar a 3000 características para eficiencia
+        tfidf_matrix = vect.fit_transform(corpus)   # Matriz TF-IDF de los nombres de cursos
+        q_vec_tfidf = vect.transform([texto_usuario])   # Vector TF-IDF del texto del usuario
+        sims_tfidf = cosine_similarity(q_vec_tfidf, tfidf_matrix)[0]    # Similitud TF-IDF
 
-        top_indices = np.argsort(sims_tfidf)[::-1][:10]
-        q_vec_embed = X_embeddings[top_indices].mean(axis=0).reshape(1, -1)
-        sims_embed = cosine_similarity(q_vec_embed, X_embeddings)[0]
+        # Calcular similitud en espacio de embeddings
+        top_indices = np.argsort(sims_tfidf)[::-1][:10] # Tomar top 10 para embeddings
+        q_vec_embed = X_embeddings[top_indices].mean(axis=0).reshape(1, -1) # Vector promedio de embeddings
+        sims_embed = cosine_similarity(q_vec_embed, X_embeddings)[0]   # Similitud en espacio de embeddings
 
+        # Combinar similitudes con pesos ajustables
         similitud_final = peso_embed * sims_embed + peso_tfidf * sims_tfidf
 
-        top_indices = np.argsort(similitud_final)[::-1][:num_recomendaciones * 3]
-        resultados = df_final.iloc[top_indices][['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA']]
-        resultados = resultados.drop_duplicates(subset='NOMBRE_OFERTA').head(num_recomendaciones)
+        # Seleccionar top recomendaciones
+        top_indices = np.argsort(similitud_final)[::-1][:num_recomendaciones * 3]   # Tomar más para filtrar duplicados
+        resultados = df_final.iloc[top_indices][['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA']]  # Seleccionar columnas relevantes
+        resultados = resultados.drop_duplicates(subset='NOMBRE_OFERTA').head(num_recomendaciones)   # Filtrar duplicados y limitar al número solicitado
 
         return resultados
 
     @staticmethod
-    def obtener_recomendaciones(query: str, num_recomendaciones: int = 5):
-        """
-        Retorna cursos recomendados según el texto del usuario (query).
-        Combina similitud TF-IDF + similitud de embeddings.
-        """
+    def obtener_recomendaciones_inteligentes_2(
+        texto_usuario,
+        df_final,
+        X_embeddings,
+        num_recomendaciones=5,
+        peso_embed=0.6
+    ):
+        # Normalizar texto de entrada
+        texto_usuario = texto_usuario.lower().strip()
 
-        modelos = ModelService._models_cache
+        # ---- Similitud semantica con TF-IDF ----
+        # Construir corpus TF-IDF
+        corpus_nombres = df_final['NOMBRE_OFERTA'].fillna('').astype(str).tolist()
 
-        # --------------------------------------------------------
-        # 1. Verificar que los modelos estén cargados
-        # --------------------------------------------------------
-        for key in ["embeddings", "matriz", "cursos"]:
-            if modelos.get(key) is None:
-                raise HTTPException(status_code=400, detail=f"❌ Modelo '{key}' no está cargado.")
+        vect_tfidf_temp = TfidfVectorizer(max_features=3000)   # Limitar a 3000 características para eficiencia
+        tfidf_temp = vect_tfidf_temp.fit_transform(corpus_nombres)   # Matriz TF-IDF de los nombres de cursos
+        sims_temp = cosine_similarity(vect_tfidf_temp.transform([texto_usuario]), tfidf_temp)[0]    # Similitud de nombres
 
-        X_embeddings = modelos["embeddings"]
-        matriz_similitud = modelos["matriz"]
-        cursos_data = modelos["cursos_info"]
+        # Calcular similitud en espacio de embeddings
+        top_idx = np.argsort(sims_temp)[::-1][:10]  # Tomar top 10 índices basados en nombres
+        q_vec_embed = X_embeddings[top_idx].mean(axis=0).reshape(1, -1)  # Vector promedio de embeddings de top nombres
+        sims_embed = cosine_similarity(q_vec_embed, X_embeddings)[0]   # Similitud de espacio de embeddings
+
+        # ----- Similitud textual contextual con TF-IDF ----
+        corpus_contextual = (
+            df_final['DESCRIPCION_GENERAL'].fillna('').astype(str) + " " +
+            df_final["DEPENDENCIA_PRINCIPAL"].fillna('').astype(str)
+            ).tolist()
+        vect_tfidf_context = TfidfVectorizer(max_features=5000)   # Más características para contexto
+        tfidf_context = vect_tfidf_context.fit_transform(corpus_contextual)   #
+        sims_texto = cosine_similarity(vect_tfidf_context.transform([texto_usuario]), tfidf_context)[0]    # Similitud contextual
 
 
-        # --------------------------------------------------------
-        # 2. Si cursos es una matriz .npy (X_final_cursos.npy)
-        # --------------------------------------------------------
-        if isinstance(cursos_data, np.ndarray):
-            # Se requiere tener un archivo CSV descriptivo paralelo, por ejemplo:
-            info_path = "data/cursos_info.csv"
-            try:
-                df_cursos = pd.read_csv(info_path)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"❌ No se pudo cargar información descriptiva de cursos ({info_path}). Error: {e}"
-                )
-        elif isinstance(cursos_data, pd.DataFrame):
-            df_cursos = cursos_data
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="❌ El tipo de datos de 'cursos' no es válido (debe ser np.ndarray o DataFrame)."
-            )
+        # Combinar similitudes con pesos ajustables
+        similitud_total = peso_embed * sims_embed + (1 - peso_embed) * sims_texto
 
-        # --------------------------------------------------------
-        # 3. Calcular similitud TF-IDF sobre nombres de cursos
-        # --------------------------------------------------------
-        corpus = df_cursos['NOMBRE_OFERTA'].fillna('').astype(str).tolist()
-        vect = TfidfVectorizer(max_features=5000)
-        tfidf_matrix = vect.fit_transform(corpus)
-        query_vec = vect.transform([query])
+        # Seleccionar top cursos
+        top_indices = np.argsort(similitud_total)[::-1][:num_recomendaciones]   # Tomar más para filtrar duplicados
+       
+        columnas = ['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA', 'DESCRIPCION_GENERAL', 'DEPENDENCIA_PRINCIPAL', 'AREA', 'UNIDAD_ADSCRITA']
+        resultados = df_final.iloc[top_indices][columnas]  # Seleccionar columnas relevantes
 
-        sims_tfidf = cosine_similarity(query_vec, tfidf_matrix)[0]
+        return resultados
 
-        # --------------------------------------------------------
-        # 4. Calcular similitud en espacio de embeddings
-        # --------------------------------------------------------
-        top_indices = np.argsort(sims_tfidf)[::-1][:10]
-        q_vec_embed = X_embeddings[top_indices].mean(axis=0).reshape(1, -1)
-        sims_embed = cosine_similarity(q_vec_embed, X_embeddings)[0]
-
-        # --------------------------------------------------------
-        # 5. Combinar resultados (ajustable)
-        # --------------------------------------------------------
-        similitud_final = 0.6 * sims_embed + 0.4 * sims_tfidf
-
-        # --------------------------------------------------------
-        # 6. Seleccionar top recomendaciones
-        # --------------------------------------------------------
-        top_indices = np.argsort(similitud_final)[::-1][:num_recomendaciones]
-        resultados = df_cursos.iloc[top_indices][['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA']].drop_duplicates()
-
-        return resultados.to_dict(orient="records")
     
 # ============================================================
 # SINGLETON INSTANCE

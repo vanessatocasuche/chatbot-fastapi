@@ -25,11 +25,9 @@ function renderModelStatus(tipo, isLoaded) {
 
 function emojiFor(tipo) {
   switch (tipo) {
-    case "autoencoder": return "🧠";
     case "embeddings": return "📘";
     case "matriz": return "📊";
     case "cursos": return "📚";
-    case "cursos_info": return "📝";
     default: return "📦";
   }
 }
@@ -48,11 +46,9 @@ async function fetchStatus() {
     const data = await res.json();
     statusDiv.innerHTML = `
       <ul>
-        ${renderModelStatus("autoencoder", data.autoencoder)}
         ${renderModelStatus("embeddings", data.embeddings)}
         ${renderModelStatus("matriz", data.matriz)}
         ${renderModelStatus("cursos", data.cursos)}
-        ${renderModelStatus("cursos_info", data.cursos_info)}
       </ul>
     `;
   } catch (err) {

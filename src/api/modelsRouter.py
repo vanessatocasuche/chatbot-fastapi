@@ -13,7 +13,7 @@ async def upload_model(file: UploadFile, tipo: str = Form(...)):
     Sube y guarda un archivo de modelo en el servidor.
 
     Parámetros aceptados:
-    - tipo: str — uno de ["autoencoder", "embeddings", "matriz", "cursos", "cursos_info"]
+    - tipo: str — uno de ["embeddings", "matriz", "cursos"]
     - file: archivo correspondiente al tipo seleccionado
     """
     return await ModelService.handle_upload(file, tipo)

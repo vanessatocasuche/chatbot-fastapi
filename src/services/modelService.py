@@ -1,7 +1,7 @@
 import logging
 from turtle import pd
 from src.core.logger import logger
-from src.core.config import AUTOENCODER_DIR, EMBEDDINGS_DIR, MATRIZ_DIR, CURSOS_DIR, CURSOS_INFO_DIR
+from src.core.config import EMBEDDINGS_DIR, MATRIZ_DIR, CURSOS_DIR
 import numpy as np
 from fastapi import HTTPException, UploadFile
 from pathlib import Path
@@ -27,11 +27,9 @@ class ModelService:
     """
 
     _path_map = {
-        "autoencoder": AUTOENCODER_DIR,
         "embeddings": EMBEDDINGS_DIR,
         "matriz": MATRIZ_DIR,
         "cursos": CURSOS_DIR,
-        "cursos_info": CURSOS_INFO_DIR,
     }
 
     _models_cache = {tipo: None for tipo in VALID_MODEL_TYPES}
@@ -64,7 +62,7 @@ class ModelService:
     # --------------------------------------------------------
     @classmethod
     def load(cls, tipo: str):
-        """Carga el archivo indicado en memoria (Autoencoder, Embeddings, Matriz, CSV)."""
+        """Carga el archivo indicado en memoria ( Embeddings, Matriz, cursos.csv)."""
         if tipo not in VALID_MODEL_TYPES:
             raise HTTPException(status_code=400, detail=f"Tipo no válido: {tipo}")
 
@@ -73,17 +71,12 @@ class ModelService:
             raise HTTPException(status_code=404, detail=f"Archivo no encontrado: {path}")
 
         try:
-            if tipo == "autoencoder":
-                pass
-                cls._models_cache["autoencoder"] = load_model(path)
-            elif tipo == "embeddings":
+            if tipo == "embeddings":
                 cls._models_cache["embeddings"] = np.load(path)
             elif tipo == "matriz":
                 cls._models_cache["matriz"] = np.load(path)
             elif tipo == "cursos":
-                cls._models_cache["cursos"] = np.load(path)
-            elif tipo == "cursos_info":
-                cls._models_cache["cursos_info"] = pd.read_csv(path)
+                cls._models_cache["cursos"] = pd.read_csv(path)
 
             logger.info(f"✅ Archivo '{tipo}' cargado correctamente desde {path}")
             return {"message": f"Archivo '{tipo}' cargado correctamente."}

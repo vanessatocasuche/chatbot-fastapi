@@ -96,7 +96,7 @@ class RecommenderService:
         # Seleccionar top cursos
         top_indices = np.argsort(similitud_total)[::-1][:num_recomendaciones]   # Tomar más para filtrar duplicados
        
-        columnas = ['NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA', 'DESCRIPCION_GENERAL', 'DEPENDENCIA_PRINCIPAL', 'AREA', 'UNIDAD_ADSCRITA']
+        columnas = ["PORTAFOLIO", "LINEA" ,'ID_OFERTA', 'NOMBRE_OFERTA', 'MODALIDAD', 'TIPO_OFERTA', 'DESCRIPCION_GENERAL', 'DEPENDENCIA_PRINCIPAL', 'AREA', 'UNIDAD_ADSCRITA']
         resultados = df_final.iloc[top_indices][columnas]  # Seleccionar columnas relevantes
 
         return resultados

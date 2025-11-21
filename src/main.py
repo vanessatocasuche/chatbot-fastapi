@@ -9,11 +9,28 @@ from src.services import modelService
 from src.core.database import Base, engine
 from src.api.apiRouter import router as api_router
 
-
 # ============================================================
 # APP CONFIG
 # ============================================================
 app = FastAPI(title="Chatbot con Clustering y Feedback")
+
+# ============================================================
+# CORS CONFIG
+# ============================================================
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Crear las tablas si no existen
 Base.metadata.create_all(bind=engine)
@@ -29,7 +46,6 @@ app.include_router(api_router)
 async def startup_event():
     logging.info("🚀 Iniciando sistema...")
     try:
-        # Aquí podrías cargar tus modelos si lo deseas
         logging.info("--- Modelos cargados correctamente al inicio.")
     except Exception as e:
         logging.error(f"--- Error cargando modelos al inicio: {e}")
@@ -39,33 +55,16 @@ async def startup_event():
 # FRONTEND (Jinja2)
 # ============================================================
 
-# Configurar plantillas y archivos estáticos
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Ruta raíz -> página HTML del chatbot
 @app.get("/", response_class=HTMLResponse)
 async def chat_ui(request: Request):
-    """
-    Página principal del chatbot (frontend)
-    """
     return templates.TemplateResponse("chat.html", {"request": request})
-
 
 @app.get("/models", response_class=HTMLResponse)
 async def models_ui(request: Request):
-    """
-    Página de administración de modelos
-    """
     return templates.TemplateResponse("models.html", {"request": request})
-
-
-@app.get("/conversations", response_class=HTMLResponse)
-async def conversations_ui(request: Request):
-    """
-    Página de administración de conversaciones
-    """
-    return templates.TemplateResponse("conversations.html", {"request": request})
 
 @app.get("/conversations", response_class=HTMLResponse)
 async def conversations_ui(request: Request):

@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
     "http://localhost:5173",
+    "https://frontend-chat-recomendador.vercel.app/"
     "http://127.0.0.1:5173"
 ]
 
